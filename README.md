@@ -8,7 +8,7 @@ A C++20 limit order book that rebuilds an instrument's book from a NASDAQ ITCH 5
 - **Order lookup (`OrderHashTable`):** open addressing with linear probing over one flat power-of-two array at ≤50% load.
 - **Price levels:** one `std::vector<Level>` per side, indexed directly by price. Add, execute, cancel and delete are O(1).
 - **Memory:** about 66 MB, allocated once (order pool 32 MB, hash table 32 MB, price levels 1.5 MB).
-- **Layout:** `lob/nasdaq_itch/` (messages, book, replay) · `fetch_data.py` (market data download) · `lob/orders`, `lob/parsers` (fixed-slot book, order vector, FIX/SEBX parsers).
+- **Layout:** `nasdaq_itch/` (messages, book, replay) · `fetch_data.py` (market data download) · `orders/`, `parsers/` (fixed-slot book, order vector, FIX/SEBX parsers).
 
 **Build** (CMake 3.20+, C++20):
 
