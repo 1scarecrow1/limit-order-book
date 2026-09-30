@@ -1,0 +1,66 @@
+---
+# Based on LLVM, withspecific overrides.
+# Developed against clang-format 23.1.1.
+BasedOnStyle: LLVM
+Language: Cpp
+Standard: c++20
+
+# --- Indentation ---
+IndentWidth: 2
+UseTab: Never
+TabWidth: 2
+ContinuationIndentWidth: 2
+IndentCaseLabels: true
+AccessModifierOffset: -2
+NamespaceIndentation: None
+
+# --- Braces ---
+BreakBeforeBraces: Custom
+BraceWrapping:
+  BeforeElse: true
+  BeforeCatch: true
+SpaceBeforeParens: ControlStatements
+Cpp11BracedListStyle: true
+
+# --- Control Loops ---
+AllowShortBlocksOnASingleLine: Never
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+AllowShortLambdasOnASingleLine: Empty
+
+# --- Line length ---
+ColumnLimit: 80
+
+# --- Template ---
+BreakTemplateDeclarations: Yes
+ReflowComments: true
+
+# --- West const `const int&` rather than `int const&` ---
+QualifierAlignment: Left
+
+# --- Pointers / references bind to the type ---
+PointerAlignment: Left
+ReferenceAlignment: Left
+DerivePointerAlignment: false
+
+# --- Includes ---
+SortIncludes: CaseSensitive
+IncludeBlocks: Preserve
+
+# --- Misc readability ---
+AlignAfterOpenBracket: Align
+AlignTrailingComments: true
+BinPackArguments: true
+BinPackParameters: true
+BreakConstructorInitializers: BeforeColon
+PackConstructorInitializers: NextLine
+SeparateDefinitionBlocks: Always
+EmptyLineBeforeAccessModifier: LogicalBlock
+FixNamespaceComments: true
+InsertNewlineAtEOF: true
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 1
+SpacesBeforeTrailingComments: 2
