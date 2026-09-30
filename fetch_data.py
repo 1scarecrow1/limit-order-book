@@ -1,12 +1,13 @@
 import argparse
 import gzip
 import os
+import sys
 import urllib.error
 import urllib.request
 
-DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data")
+DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
-ITCH_URL = "https://emi.nasdaq.com/ITCH/Nasdaq%20ITCH/itch50_05_15.gz"
+ITCH_URL = "https://emi.nasdaq.com/ITCH/Nasdaq%20ITCH/S061226-v50.txt.gz"
 
 
 def file_size(n: float) -> str:
@@ -51,17 +52,16 @@ def download(url: str, dest: str) -> bool:
         return False
 
 
-# Non-order/trade message types
-ITCH_REFERENCE_TYPES = set(b"SRHYLVWKJhO")
-
-
 def format_timestamp(hhmm: str) -> int:
     h, m = hhmm.split(":")
     return (int(h) * 3600 + int(m) * 60) * 1e9
 
 
-def itch_window(src, out, start_ns: int, end_ns: int, limit: int) -> dict:
+def itch_window(
+    src, out, start_ns: int, end_ns: int, limit: int, symbol: bytes
+) -> dict:
     live: dict = {}
+    locate = None
     counts: dict = {}
     written = 0
     in_window = False
@@ -92,6 +92,15 @@ def itch_window(src, out, start_ns: int, end_ns: int, limit: int) -> dict:
         body = src.read(n)
         if len(body) < n:
             break
+        kind = body[0]
+        if kind == ord("S"):
+            emit(body)
+            continue
+        if kind == ord("R"):
+            if body[11:19] == symbol:
+                locate = body[1:3]
+                emit(body)
+            continue
         ts = int.from_bytes(body[5:11], "big")
 
         if not in_window:
@@ -101,10 +110,9 @@ def itch_window(src, out, start_ns: int, end_ns: int, limit: int) -> dict:
                 live.clear()
                 in_window = True
             else:
-                kind = body[0]
-                if kind in ITCH_REFERENCE_TYPES:
-                    emit(body)
-                elif kind in b"AF":
+                if body[1:3] != locate:
+                    continue
+                if kind in b"AF":
                     live[int.from_bytes(body[11:19], "big")] = bytearray(
                         b"A" + body[1:36]
                     )
@@ -128,17 +136,20 @@ def itch_window(src, out, start_ns: int, end_ns: int, limit: int) -> dict:
 
         if ts >= end_ns:
             break
-        emit(body)
+        if body[1:3] == locate:
+            emit(body)
         if written % (16 * 1024 * 1024) < 64:
             print(f"\r  in window: {file_size(written)} written" + " " * 20, end="")
     print()
     return counts
 
 
-def cmd_itch(start: str, end: str, max_mb: int) -> int:
+def cmd_itch(start: str, end: str, max_mb: int, symbol: str) -> int:
     out_dir = ensure_dir()
+    day = ITCH_URL.rsplit("/", 1)[1].split("-")[0].split(".")[0]
     dest = os.path.join(
-        out_dir, f"itch_{start.replace(':', '')}_{end.replace(':', '')}.bin"
+        out_dir,
+        f"{day}_{symbol}_{start.replace(':', '')}_{end.replace(':', '')}.itch",
     )
     print(f"  streaming ITCH 5.0, keeping {start}-{end} ET (max {max_mb} MB written)")
     try:
@@ -152,6 +163,7 @@ def cmd_itch(start: str, end: str, max_mb: int) -> int:
                 format_timestamp(start),
                 format_timestamp(end),
                 max_mb * 1024 * 1024,
+                symbol.ljust(8).encode(),
             )
     except Exception as e:
         print(f"\n  failed: {e}")
@@ -169,6 +181,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
+    ap.add_argument("--source", choices=["itch"], default="itch")
+    ap.add_argument("--symbol", default="AAPL", help="keep this symbol only")
     ap.add_argument("--list", action="store_true", help="list sources")
     ap.add_argument("--date", help="UTC date")
     ap.add_argument(
@@ -189,12 +203,17 @@ def main() -> int:
     )
     ap.add_argument(
         "--end",
-        default="16:00",
+        default="12:30",
         help="window end",
     )
     args = ap.parse_args()
 
     if args.source == "itch":
         if not args.sample:
+            print("  pass --sample to stream the ITCH file")
             return 2
-        return cmd_itch(args.start, args.end, args.sample_mb)
+        return cmd_itch(args.start, args.end, args.sample_mb, args.symbol)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
