@@ -1,4 +1,4 @@
-# Limit Order Book — NASDAQ TotalView-ITCH 5.0 Replay
+# Limit Order Book - NASDAQ TotalView-ITCH 5.0 Replay
 
 A C++20 limit order book that rebuilds an instrument's book from a NASDAQ ITCH 5.0 feed file and tracks the best bid and ask through the session.
 
