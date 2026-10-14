@@ -2,13 +2,23 @@
 
 A C++20 limit order book that rebuilds an instrument's book from a NASDAQ ITCH 5.0 feed file and tracks the best bid and ask through the session.
 
-- **Message parsing:** `nasdaq_itch/itch_messages.h` decodes every ITCH 5.0 message type (order, trade, stock directory, system event etc.). `nasdaq_itch/itch_book.h` builds the book based on messages. The replay applies Add, Execute, Cancel, Delete and Replace to the book.
-- **Contiguous, preallocated storage:** Orders are linked into price levels by 32-bit indices, not pointers.
+![Replaying AAPL from a NASDAQ TotalView-ITCH 5.0 file](docs/itch_replay.gif)
+
+- **Message parsing:**
+  - `nasdaq_itch/itch_messages.h` decodes every ITCH 5.0 message type (order, trade, stock directory, system event etc.).
+  - `nasdaq_itch/itch_book.h` builds the book based on messages.
+  - The replay applies Add, Execute, Cancel, Delete and Replace to the book.
+- **Contiguous, preallocated storage:** Orders are linked into price levels by 32-bit indices instead of pointers.
 - **Order pool (`OrderAllocator`):** one `std::vector<Order>` of 2^20 slots, with an O(1) free list
 - **Order lookup (`OrderHashTable`):** open addressing with linear probing over one flat power-of-two array at ≤50% load.
 - **Price levels:** one `std::vector<Level>` per side indexed directly by price. Add, execute, cancel and delete are O(1).
 - **Memory:** about 66MB, allocated once (order pool 32 MB, hash table 32 MB, price levels 1.5 MB).
-- **Layout:** `nasdaq_itch/` (messages, book, replay) · `fetch_data.py` (market data) · `orders/`, `parsers/` (fixed-slot book, order vector, FIX/SEBX parsers).
+- **Layout:**
+  - `nasdaq_itch/`: messages, book, replay
+  - `fetch_data.py`: market data
+  - `docs/`
+  - `orders/`
+  - `parsers/`: fixed-slot book, order vector, FIX/SEBX parsers
 
 **Build** (CMake 3.20+, C++20):
 
